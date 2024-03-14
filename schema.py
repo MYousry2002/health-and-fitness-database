@@ -4,6 +4,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, sessionmaker
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.ext.hybrid import hybrid_property
+from sqlalchemy.schema import CheckConstraint
 from datetime import datetime, timedelta
 import bcrypt
 import secrets
@@ -32,6 +33,8 @@ class User(Base):
 
     # relationships with other tables
     workouts = relationship("Workout", back_populates="user")
+    meals = relationship("Meal", back_populates="user")
+    water_intakes = relationship("WaterIntake", back_populates="user")
     nutrition_logs = relationship("NutritionLog", back_populates="user")
     sleep_logs = relationship("SleepLog", back_populates="user")
     health_metrics = relationship("HealthMetric", back_populates="user")
@@ -77,24 +80,63 @@ class Workout(Base):
     user = relationship("User", back_populates="workouts")
 
 
+# Meal class
+class Meal(Base):
+    __tablename__ = 'meals'
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey('users.id'))
+    date = Column(Date)
+    meal_type = Column(String)
+    eating_time = Column(DateTime)  # The exact time of the meal
+    user = relationship("User", back_populates="meals")
+    food_items = relationship("MealFoodItem", back_populates="meal")
+
+
+# FoodItem class
+class FoodItem(Base):
+    __tablename__ = 'food_items'
+    id = Column(Integer, primary_key=True)
+    name = Column(String, nullable=False)
+    # nutritional information
+    calories = Column(Float, CheckConstraint('calories>=0'), nullable=False)
+    proteins = Column(Float, CheckConstraint('proteins>=0'), nullable=False)
+    carbs = Column(Float, CheckConstraint('carbs>=0'), nullable=False)
+    fats = Column(Float, CheckConstraint('fats>=0'), nullable=False)
+    fiber = Column(Float, CheckConstraint('fiber>=0'))
+    vitamins = Column(String)  # Could be json
+    minerals = Column(String)  # Could be json
+    # relationships with other tables
+    meal_food_items = relationship("MealFoodItem", back_populates="food_item")
+
+
+# MealFoodItem class (Association Object)
+class MealFoodItem(Base):
+    __tablename__ = 'meal_food_items'
+    id = Column(Integer, primary_key=True)
+    meal_id = Column(Integer, ForeignKey('meals.id'))
+    food_item_id = Column(Integer, ForeignKey('food_items.id'))
+    serving_size = Column(Float)
+    meal = relationship("Meal", back_populates="food_items")
+    food_item = relationship("FoodItem")
+
+
+# WaterIntake class
+class WaterIntake(Base):
+    __tablename__ = 'water_intake'
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey('users.id'))
+    date = Column(Date)
+    amount = Column(Float, CheckConstraint('amount>=0'), nullable=False)
+    user = relationship("User", back_populates="water_intakes")
+
+
 # NutritionLog class
 class NutritionLog(Base):
     __tablename__ = 'nutrition_logs'
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey('users.id'))
-    water_intake = Column(Float)  # in liters
     date = Column(Date)
-    meal_type = Column(String)  # Breakfast, lunch, dinner, or snack
-    serving_size = Column(String)  # Serving size or quantity of the food item
-    food_item = Column(String)
-    calories = Column(Float)
-    proteins = Column(Float)
-    carbs = Column(Float)
-    fats = Column(Float)
-    vitamins = Column(String)  # Could be a serialized list or a dedicated structure
-    minerals = Column(String)  # Same as above
-    fiber = Column(Float)  # Amount of dietary fiber
-    eating_time = Column(DateTime)  # The exact time of the meal
+    summary = Column(String)  # include total calories, water intake, etc.
     user = relationship("User", back_populates="nutrition_logs")
 
 
