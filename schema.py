@@ -64,7 +64,8 @@ class User(Base):
 class UserSession(Base):
     __tablename__ = 'sessions'
     id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
+    user_id = Column(Integer, ForeignKey('users.id'), index=True,
+                     nullable=False)
     # Ensuring uniqueness and non-nullability
     token = Column(String(255), unique=True, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
@@ -84,7 +85,8 @@ class UserSession(Base):
 class Workout(Base):
     __tablename__ = 'workouts'
     id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
+    user_id = Column(Integer, ForeignKey('users.id'), index=True,
+                     nullable=False)
     date = Column(Date, nullable=False)
     # Assuming a max length for the workout type
     type = Column(String(255), nullable=False)
@@ -137,7 +139,8 @@ class FoodItemVitamin(Base):
     id = Column(Integer, primary_key=True)
     food_item_id = Column(Integer, ForeignKey('food_items.id'), nullable=False)
     vitamin_id = Column(Integer, ForeignKey('vitamins.id'), nullable=False)
-    amount = Column(Float, nullable=False)  # e.g., amount in milligrams
+    amount = Column(Float, CheckConstraint('amount>=0'),
+                    nullable=False)  # e.g., amount in milligrams
     food_item = relationship("FoodItem", back_populates="vitamins")
     vitamin = relationship("Vitamin")
 
@@ -156,7 +159,8 @@ class FoodItemMineral(Base):
 class Meal(Base):
     __tablename__ = 'meals'
     id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
+    user_id = Column(Integer, ForeignKey('users.id'), index=True,
+                     nullable=False)
     date = Column(Date, nullable=False)
     meal_type = Column(String(255), nullable=False)  # Breakfast, Lunch, etc.
     eating_time = Column(DateTime, nullable=False)
@@ -181,7 +185,8 @@ class MealFoodItem(Base):
 class WaterIntake(Base):
     __tablename__ = 'water_intake'
     id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
+    user_id = Column(Integer, ForeignKey('users.id'), index=True,
+                     nullable=False)
     date = Column(Date, nullable=False)
     # Ensuring water intake amount is non-negative
     amount = Column(Float, CheckConstraint('amount>=0'), nullable=False)
@@ -192,7 +197,8 @@ class WaterIntake(Base):
 class NutritionLog(Base):
     __tablename__ = 'nutrition_logs'
     id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey('users.id'))
+    user_id = Column(Integer, ForeignKey('users.id'), index=True,
+                     nullable=False)
     date = Column(Date, nullable=False)
     # include total calories, water intake, etc.
     summary = Column(String(1000), nullable=False)
@@ -203,7 +209,8 @@ class NutritionLog(Base):
 class SleepLog(Base):
     __tablename__ = 'sleep_logs'
     id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
+    user_id = Column(Integer, ForeignKey('users.id'), index=True,
+                     nullable=False)
     date = Column(Date, nullable=False)
     time_fell_asleep = Column(DateTime, nullable=False)
     time_woke_up = Column(DateTime, nullable=False)
@@ -248,7 +255,8 @@ class SleepLog(Base):
 class HealthMetric(Base):
     __tablename__ = 'health_metrics'
     id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
+    user_id = Column(Integer, ForeignKey('users.id'), index=True,
+                     nullable=False)
     date = Column(Date, nullable=False)
     time = Column(DateTime, nullable=False)  # time of the day
 
@@ -275,7 +283,8 @@ class HealthMetric(Base):
 class BodyComposition(Base):
     __tablename__ = 'body_compositions'
     id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
+    user_id = Column(Integer, ForeignKey('users.id'), index=True,
+                     nullable=False)
     date = Column(Date, nullable=False)
 
     # Assuming weight can be optional but must be positive when provided
@@ -319,7 +328,8 @@ class GoalStatusEnum(enum.Enum):
 class Goal(Base):
     __tablename__ = 'goals'
     id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
+    user_id = Column(Integer, ForeignKey('users.id'), index=True,
+                     nullable=False)
     goal_type = Column(String(255), nullable=False)
     target_value = Column(Float, CheckConstraint('target_value>=0'),
                           nullable=False)  # Targets should be non-negative
