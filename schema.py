@@ -34,6 +34,7 @@ class User(Base):
     # non-negative initial weight and height
     initial_weight = Column(Float, CheckConstraint('initial_weight>=0'),
                             nullable=False)
+    # non-negative height
     height = Column(Float, CheckConstraint('height>=0'), nullable=False)
 
     # relationships with other tables
@@ -97,18 +98,6 @@ class Workout(Base):
     user = relationship("User", back_populates="workouts")
 
 
-# Meal class
-class Meal(Base):
-    __tablename__ = 'meals'
-    id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
-    date = Column(Date, nullable=False)
-    meal_type = Column(String(255), nullable=False)  # Breakfast, Lunch, etc.
-    eating_time = Column(DateTime, nullable=False)
-    user = relationship("User", back_populates="meals")
-    food_items = relationship("MealFoodItem", back_populates="meal")
-
-
 # FoodItem class
 class FoodItem(Base):
     __tablename__ = 'food_items'
@@ -120,10 +109,59 @@ class FoodItem(Base):
     carbs = Column(Float, CheckConstraint('carbs>=0'), nullable=False)
     fats = Column(Float, CheckConstraint('fats>=0'), nullable=False)
     fiber = Column(Float, CheckConstraint('fiber>=0'))
-    vitamins = Column(String)  # Could be json
-    minerals = Column(String)  # Could be json
+    # instead of using json, I created tables for vitamins and minerals
+    vitamins = relationship("FoodItemVitamin", back_populates="food_item")
+    minerals = relationship("FoodItemMineral", back_populates="food_item")
     # relationships with other tables
     meal_food_items = relationship("MealFoodItem", back_populates="food_item")
+
+
+# vitamins and minerals are separate classes to allow for more details
+class Vitamin(Base):
+    __tablename__ = 'vitamins'
+    id = Column(Integer, primary_key=True)
+    name = Column(String(255), nullable=False)  # vitamine type/name
+    # Other relevant fields
+
+
+class Mineral(Base):
+    __tablename__ = 'minerals'
+    id = Column(Integer, primary_key=True)
+    name = Column(String(255), nullable=False)  # mineral type/name
+    # Other relevant fields
+
+
+# FoodItemVitamin and FoodItemMineral classes (Association Objects)
+class FoodItemVitamin(Base):
+    __tablename__ = 'food_item_vitamins'
+    id = Column(Integer, primary_key=True)
+    food_item_id = Column(Integer, ForeignKey('food_items.id'), nullable=False)
+    vitamin_id = Column(Integer, ForeignKey('vitamins.id'), nullable=False)
+    amount = Column(Float, nullable=False)  # e.g., amount in milligrams
+    food_item = relationship("FoodItem", back_populates="vitamins")
+    vitamin = relationship("Vitamin")
+
+
+class FoodItemMineral(Base):
+    __tablename__ = 'food_item_minerals'
+    id = Column(Integer, primary_key=True)
+    food_item_id = Column(Integer, ForeignKey('food_items.id'), nullable=False)
+    mineral_id = Column(Integer, ForeignKey('minerals.id'), nullable=False)
+    amount = Column(Float, nullable=False)  # e.g., amount in milligrams
+    food_item = relationship("FoodItem", back_populates="minerals")
+    mineral = relationship("Mineral")
+
+
+# Meal class
+class Meal(Base):
+    __tablename__ = 'meals'
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
+    date = Column(Date, nullable=False)
+    meal_type = Column(String(255), nullable=False)  # Breakfast, Lunch, etc.
+    eating_time = Column(DateTime, nullable=False)
+    user = relationship("User", back_populates="meals")
+    food_items = relationship("MealFoodItem", back_populates="meal")
 
 
 # MealFoodItem class (Association Object), many-to-many relationship
@@ -269,7 +307,6 @@ class BodyComposition(Base):
 
 
 # Goal class
-
 
 # Define an enumeration for goal statuses
 class GoalStatusEnum(enum.Enum):
