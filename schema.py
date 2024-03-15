@@ -1,5 +1,5 @@
 from sqlalchemy import create_engine, Column, Date, DateTime, ForeignKey, func
-from sqlalchemy import Integer, String, Float, Enum
+from sqlalchemy import Integer, String, Float, Enum, Index
 from sqlalchemy.orm import declarative_base, relationship, sessionmaker
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.ext.hybrid import hybrid_property
@@ -85,7 +85,7 @@ class UserSession(Base):
 class Workout(Base):
     __tablename__ = 'workouts'
     id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey('users.id'), index=True,
+    user_id = Column(Integer, ForeignKey('users.id'),
                      nullable=False)
     date = Column(Date, nullable=False)
     # Assuming a max length for the workout type
@@ -98,6 +98,12 @@ class Workout(Base):
     calories_burned = Column(Float, CheckConstraint('calories_burned>=0'),
                              nullable=False)
     user = relationship("User", back_populates="workouts")
+
+    # indexing user_id and date for faster queries
+    # indexing by user_id first since it is more selective and commonly used
+    __table_args__ = (
+        Index('idx_user_id_date', 'user_id', 'date'),
+    )
 
 
 # FoodItem class
@@ -167,6 +173,12 @@ class Meal(Base):
     user = relationship("User", back_populates="meals")
     food_items = relationship("MealFoodItem", back_populates="meal")
 
+    # indexing user_id and date for faster queries
+    # indexing by user_id first since it is more selective and commonly used
+    __table_args__ = (
+        Index('idx_user_id_date', 'user_id', 'date'),
+    )
+
 
 # MealFoodItem class (Association Object), many-to-many relationship
 # This allows recording which food items are part of which meals
@@ -185,31 +197,43 @@ class MealFoodItem(Base):
 class WaterIntake(Base):
     __tablename__ = 'water_intake'
     id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey('users.id'), index=True,
+    user_id = Column(Integer, ForeignKey('users.id'),
                      nullable=False)
     date = Column(Date, nullable=False)
     # Ensuring water intake amount is non-negative
     amount = Column(Float, CheckConstraint('amount>=0'), nullable=False)
     user = relationship("User", back_populates="water_intakes")
 
+    # indexing user_id and date for faster queries
+    # indexing by user_id first since it is more selective and commonly used
+    __table_args__ = (
+        Index('idx_user_id_date', 'user_id', 'date'),
+    )
+
 
 # NutritionLog class
 class NutritionLog(Base):
     __tablename__ = 'nutrition_logs'
     id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey('users.id'), index=True,
+    user_id = Column(Integer, ForeignKey('users.id'),
                      nullable=False)
     date = Column(Date, nullable=False)
     # include total calories, water intake, etc.
     summary = Column(String(1000), nullable=False)
     user = relationship("User", back_populates="nutrition_logs")
 
+    # indexing user_id and date for faster queries
+    # indexing by user_id first since it is more selective and commonly used
+    __table_args__ = (
+        Index('idx_user_id_date', 'user_id', 'date'),
+    )
+
 
 # SleepLog class
 class SleepLog(Base):
     __tablename__ = 'sleep_logs'
     id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey('users.id'), index=True,
+    user_id = Column(Integer, ForeignKey('users.id'),
                      nullable=False)
     date = Column(Date, nullable=False)
     time_fell_asleep = Column(DateTime, nullable=False)
@@ -250,12 +274,18 @@ class SleepLog(Base):
         return (func.julianday(
             cls.time_woke_up) - func.julianday(cls.time_fell_asleep)) * 24
 
+    # indexing user_id and date for faster queries
+    # indexing by user_id first since it is more selective and commonly used
+    __table_args__ = (
+        Index('idx_user_id_date', 'user_id', 'date'),
+    )
+
 
 # HealthMetric class
 class HealthMetric(Base):
     __tablename__ = 'health_metrics'
     id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey('users.id'), index=True,
+    user_id = Column(Integer, ForeignKey('users.id'),
                      nullable=False)
     date = Column(Date, nullable=False)
     time = Column(DateTime, nullable=False)  # time of the day
@@ -278,12 +308,19 @@ class HealthMetric(Base):
 
     user = relationship("User", back_populates="health_metrics")
 
+    # indexing user_id, date, and time for faster queries
+    # indexing by user_id first since it is more selective and commonly used
+    # date and time are commonly used for filtering but date is more important
+    __table_args__ = (
+        Index('idx_user_id_date_time', 'user_id', 'date', 'time'),
+    )
+
 
 # BodyComposition class
 class BodyComposition(Base):
     __tablename__ = 'body_compositions'
     id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey('users.id'), index=True,
+    user_id = Column(Integer, ForeignKey('users.id'),
                      nullable=False)
     date = Column(Date, nullable=False)
 
@@ -313,6 +350,12 @@ class BodyComposition(Base):
                            nullable=True)
 
     user = relationship("User", back_populates="body_compositions")
+
+    # indexing user_id and date for faster queries
+    # indexing by user_id first since it is more selective and commonly used
+    __table_args__ = (
+        Index('idx_user_id_date', 'user_id', 'date'),
+    )
 
 
 # Goal class
