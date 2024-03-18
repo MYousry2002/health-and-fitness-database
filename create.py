@@ -9,6 +9,7 @@ import bcrypt
 import secrets
 import enum
 
+
 # basic configuration
 engine = create_engine('sqlite:///health_and_fitness.db', echo=True)
 Base = declarative_base()
