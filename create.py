@@ -419,21 +419,22 @@ Base.metadata.create_all(engine)
 
 # User registration
 def register_user(username, email, password):
-    session = Session()
-    new_user = User(username=username, email=email)
-    new_user.set_password(password)
-    try:
-        session.add(new_user)
-        session.commit()
-        print("User registered successfully.")
-    except IntegrityError:
-        session.rollback()
-        print("Error: The username or email is already in use.")
-    except SQLAlchemyError as e:
-        session.rollback()
-        print(f"An error occurred while registering: {e}")
-    finally:
-        session.close()
+    # Use a context manager to ensure the session is properly managed
+    with Session() as session:
+        new_user = User(username=username, email=email)
+        new_user.set_password(password)
+        try:
+            session.add(new_user)
+            session.commit()
+            print("User registered successfully.")
+        except IntegrityError:
+            session.rollback()
+            print("Error: The username or email is already in use.")
+        except SQLAlchemyError as e:
+            session.rollback()
+            print(f"An error occurred while registering: {e}")
+        finally:
+            session.close()
 
 
 # User login

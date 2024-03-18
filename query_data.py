@@ -56,9 +56,9 @@ def last_recorded_health_metrics(user_id):
 
 # Usage example
 if __name__ == "__main__":
-    # user_id_example = 51  # Example user ID
-    print(get_workouts_by_user_and_date(51, '2023-04-01', '2024-01-31'))
-    print(average_daily_calories(133, '2023-04-01', '2024-01-31'))
-    print(average_sleep_duration_last_month(96))
-    print(weight_change_past_year(60))
-    print(last_recorded_health_metrics(71))
+    # user_id_example = 1  # Example user ID
+    print(get_workouts_by_user_and_date(17, '2023-04-01', '2024-01-31'))
+    print(average_daily_calories(36, '2023-04-01', '2024-01-31'))
+    print(average_sleep_duration_last_month(1))
+    print(weight_change_past_year(48))
+    print(last_recorded_health_metrics(27))

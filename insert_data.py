@@ -5,6 +5,7 @@ from create import (
     WaterIntake, NutritionLog, Medication, SleepLog,
     HealthMetric, BodyComposition, Goal, GoalStatusEnum
 )
+from contextlib import contextmanager
 from faker import Faker
 from datetime import timedelta
 import random
@@ -290,86 +291,82 @@ def create_goals(users, num_goals=100):
         goals.append(goal)
     return goals
 
-
-# Add data to the session and commit
-def add_to_session(data):
-    for record in data:
-        session.add(record)
-
-
-# Insert data into the database
-def main():
-    # Create users and add them to the session
-    users = create_users(num_users=50)
-    add_to_session(users)
-    session.commit()  # Ensure users are persisted and have IDs
-
-    # Generate and add food items, vitamins, minerals
-    food_items = create_food_items(num_items=100)
-    add_to_session(food_items)
-    vitamins = create_vitamins(num_vitamins=10)
-    add_to_session(vitamins)
-    minerals = create_minerals(num_minerals=10)
-    add_to_session(minerals)
-    # Ensure food items, vitamins, minerals are persisted and have IDs
-    session.commit()
-
-    # Generate and add relationships between food items and vitamins/minerals
-    food_item_vitamins = create_food_item_vitamins(food_items, vitamins)
-    add_to_session(food_item_vitamins)
-    food_item_minerals = create_food_item_minerals(food_items, minerals)
-    add_to_session(food_item_minerals)
-
-    # Generate meals and associate food items with meals
-    meals = create_meals(users, num_meals=200)
-    add_to_session(meals)
-    session.commit() # Ensure meals are persisted and have IDs
-
-    meal_food_items = create_meal_food_items(meals, food_items)
-    add_to_session(meal_food_items)
-
-    # Create water intakes and add them to the session
-    water_intakes = create_water_intakes(users)
-    add_to_session(water_intakes)
-
-    # Create nutrition logs and add them to the session
-    nutrition_logs = create_nutrition_logs(users)
-    add_to_session(nutrition_logs)
-
-    # Create medications and add them to the session
-    medications = create_medications(users)
-    add_to_session(medications)
-
-    # Create workouts and add them to the session
-    workouts = create_workouts(users)
-    add_to_session(workouts)
-
-    # Create sleep logs and add them to the session
-    sleep_logs = create_sleep_logs(users)
-    add_to_session(sleep_logs)
-
-    # Create health metrics and add them to the session
-    health_metrics = create_health_metrics(users)
-    add_to_session(health_metrics)
-
-    # Create body compositions and add them to the session
-    body_compositions = create_body_compositions(users)
-    add_to_session(body_compositions)
-
-    # Create goals and add them to the session
-    goals = create_goals(users)
-    add_to_session(goals)
-
-    # Add all to session and commit
+# use context manager and transactions
+@contextmanager
+def transactional_session():
+    """Provide a transactional scope around a series of operations."""
+    session = Session()
     try:
+        yield session
         session.commit()
-        print("All data added successfully!")
     except Exception as e:
-        print(f"An error occurred: {e}")
         session.rollback()
+        print(f"Transaction failed: {e}")
     finally:
         session.close()
 
 
+# Insert data into the database
+def insert_data():
+    with transactional_session() as session:
+        # Users must be committed to assign IDs before referencing them
+        users = create_users(num_users=50)
+        session.add_all(users)
+        session.commit()  # Ensure users are persisted and have IDs
+
+        # Generate and add food items, vitamins, minerals
+        food_items = create_food_items(num_items=100)
+        vitamins = create_vitamins(num_vitamins=10)
+        minerals = create_minerals(num_minerals=10)
+        session.add_all(food_items + vitamins + minerals)
+        # Ensure food items, vitamins, minerals are persisted and have IDs
+        session.commit()
+
+        # FoodItemVitamins and FoodItemMinerals depend on FoodItems, Vitamins, and Minerals
+        food_item_vitamins = create_food_item_vitamins(food_items, vitamins)
+        food_item_minerals = create_food_item_minerals(food_items, minerals)
+        session.add_all(food_item_vitamins + food_item_minerals)
+        session.commit()  # Commit to assign IDs
+
+        # Generate meals and associate food items with meals
+        meals = create_meals(users, num_meals=200)
+        session.add_all(meals)
+        session.commit() # Ensure meals are persisted and have IDs
+
+        meal_food_items = create_meal_food_items(meals, food_items)
+        session.add_all(meal_food_items)
+
+        # Create water intakes and add them to the session
+        water_intakes = create_water_intakes(users)
+        session.add_all(water_intakes)
+
+        # Create nutrition logs and add them to the session
+        nutrition_logs = create_nutrition_logs(users)
+        session.add_all(nutrition_logs)
+
+        # Create medications and add them to the session
+        medications = create_medications(users)
+        session.add_all(medications)
+
+        # Create workouts and add them to the session
+        workouts = create_workouts(users)
+        session.add_all(workouts)
+
+        # Create sleep logs and add them to the session
+        sleep_logs = create_sleep_logs(users)
+        session.add_all(sleep_logs)
+
+        # Create health metrics and add them to the session
+        health_metrics = create_health_metrics(users)
+        session.add_all(health_metrics)
+
+        # Create body compositions and add them to the session
+        body_compositions = create_body_compositions(users)
+        session.add_all(body_compositions)
+
+        # Create goals and add them to the session
+        goals = create_goals(users)
+        session.add_all(goals)
+
 if __name__ == "__main__":
-    main()
+    insert_data()
