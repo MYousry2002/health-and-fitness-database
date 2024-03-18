@@ -42,6 +42,7 @@ class User(Base):
     meals = relationship("Meal", back_populates="user")
     water_intakes = relationship("WaterIntake", back_populates="user")
     nutrition_logs = relationship("NutritionLog", back_populates="user")
+    medications = relationship("Medication", back_populates="user")
     sleep_logs = relationship("SleepLog", back_populates="user")
     health_metrics = relationship("HealthMetric", back_populates="user")
     body_compositions = relationship(
@@ -143,8 +144,10 @@ class Mineral(Base):
 class FoodItemVitamin(Base):
     __tablename__ = 'food_item_vitamins'
     id = Column(Integer, primary_key=True)
-    food_item_id = Column(Integer, ForeignKey('food_items.id'), nullable=False)
-    vitamin_id = Column(Integer, ForeignKey('vitamins.id'), nullable=False)
+    food_item_id = Column(Integer, ForeignKey('food_items.id'), nullable=False,
+                          index=True)
+    vitamin_id = Column(Integer, ForeignKey('vitamins.id'), nullable=False,
+                        index=True)
     amount = Column(Float, CheckConstraint('amount>=0'),
                     nullable=False)  # e.g., amount in milligrams
     food_item = relationship("FoodItem", back_populates="vitamins")
@@ -154,8 +157,10 @@ class FoodItemVitamin(Base):
 class FoodItemMineral(Base):
     __tablename__ = 'food_item_minerals'
     id = Column(Integer, primary_key=True)
-    food_item_id = Column(Integer, ForeignKey('food_items.id'), nullable=False)
-    mineral_id = Column(Integer, ForeignKey('minerals.id'), nullable=False)
+    food_item_id = Column(Integer, ForeignKey('food_items.id'), nullable=False,
+                          index=True)
+    mineral_id = Column(Integer, ForeignKey('minerals.id'), nullable=False,
+                        index=True)
     amount = Column(Float, nullable=False)  # e.g., amount in milligrams
     food_item = relationship("FoodItem", back_populates="minerals")
     mineral = relationship("Mineral")
@@ -165,8 +170,7 @@ class FoodItemMineral(Base):
 class Meal(Base):
     __tablename__ = 'meals'
     id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey('users.id'), index=True,
-                     nullable=False)
+    user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
     date = Column(Date, nullable=False)
     meal_type = Column(String(255), nullable=False)  # Breakfast, Lunch, etc.
     eating_time = Column(DateTime, nullable=False)
@@ -185,8 +189,10 @@ class Meal(Base):
 class MealFoodItem(Base):
     __tablename__ = 'meal_food_items'
     id = Column(Integer, primary_key=True)
-    meal_id = Column(Integer, ForeignKey('meals.id'))
-    food_item_id = Column(Integer, ForeignKey('food_items.id'))
+    meal_id = Column(Integer, ForeignKey('meals.id'), nullable=False,
+                     index=True)
+    food_item_id = Column(Integer, ForeignKey('food_items.id'), nullable=False,
+                          index=True)
     servings_consumed = Column(Float, CheckConstraint('servings_consumed>=0'),
                                default=1, nullable=False)  # number of servings
     meal = relationship("Meal", back_populates="food_items")
@@ -226,6 +232,24 @@ class NutritionLog(Base):
     # indexing by user_id first since it is more selective and commonly used
     __table_args__ = (
         Index('idx_user_id_date', 'user_id', 'date'),
+    )
+
+
+class Medication(Base):
+    __tablename__ = 'medications'
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
+    name = Column(String(255), nullable=False)
+    dosage = Column(String(255), nullable=False)  # Dosage in mg or specifics
+    frequency = Column(String(255), nullable=False)  # How often taken
+    start_date = Column(Date, nullable=False)
+    end_date = Column(Date, nullable=True)  # nullable if ongoing
+    reason = Column(String(1000), nullable=True)  # Reason for medication
+
+    user = relationship("User", back_populates="medications")
+
+    __table_args__ = (
+        Index('idx_meds_user_start_end', 'user_id', 'start_date', 'end_date'),
     )
 
 
