@@ -255,6 +255,7 @@ def create_body_compositions(users, num_compositions=200):
     body_compositions = []
     for _ in range(num_compositions):
         user = random.choice(users)
+        print(user.id)  # Debugging: Ensure this is not None
         body_composition = BodyComposition(
             user_id=user.id,
             date=fake.date_between(start_date='-1y', end_date='today'),
@@ -301,10 +302,31 @@ def main():
     # Create users and add them to the session
     users = create_users(num_users=50)
     add_to_session(users)
+    session.commit()  # Ensure users are persisted and have IDs
 
-    # Create workouts and add them to the session
-    workouts = create_workouts(users)
-    add_to_session(workouts)
+    # Generate and add food items, vitamins, minerals
+    food_items = create_food_items(num_items=100)
+    add_to_session(food_items)
+    vitamins = create_vitamins(num_vitamins=10)
+    add_to_session(vitamins)
+    minerals = create_minerals(num_minerals=10)
+    add_to_session(minerals)
+    # Ensure food items, vitamins, minerals are persisted and have IDs
+    session.commit()
+
+    # Generate and add relationships between food items and vitamins/minerals
+    food_item_vitamins = create_food_item_vitamins(food_items, vitamins)
+    add_to_session(food_item_vitamins)
+    food_item_minerals = create_food_item_minerals(food_items, minerals)
+    add_to_session(food_item_minerals)
+
+    # Generate meals and associate food items with meals
+    meals = create_meals(users, num_meals=200)
+    add_to_session(meals)
+    session.commit() # Ensure meals are persisted and have IDs
+
+    meal_food_items = create_meal_food_items(meals, food_items)
+    add_to_session(meal_food_items)
 
     # Create water intakes and add them to the session
     water_intakes = create_water_intakes(users)
@@ -317,6 +339,10 @@ def main():
     # Create medications and add them to the session
     medications = create_medications(users)
     add_to_session(medications)
+
+    # Create workouts and add them to the session
+    workouts = create_workouts(users)
+    add_to_session(workouts)
 
     # Create sleep logs and add them to the session
     sleep_logs = create_sleep_logs(users)
@@ -333,26 +359,6 @@ def main():
     # Create goals and add them to the session
     goals = create_goals(users)
     add_to_session(goals)
-
-    # Generate and add food items, vitamins, minerals
-    food_items = create_food_items(num_items=100)
-    add_to_session(food_items)
-    vitamins = create_vitamins(num_vitamins=10)
-    add_to_session(vitamins)
-    minerals = create_minerals(num_minerals=10)
-    add_to_session(minerals)
-
-    # Generate and add relationships between food items and vitamins/minerals
-    food_item_vitamins = create_food_item_vitamins(food_items, vitamins)
-    add_to_session(food_item_vitamins)
-    food_item_minerals = create_food_item_minerals(food_items, minerals)
-    add_to_session(food_item_minerals)
-
-    # Generate meals and associate food items with meals
-    meals = create_meals(users, num_meals=200)
-    add_to_session(meals)
-    meal_food_items = create_meal_food_items(meals, food_items)
-    add_to_session(meal_food_items)
 
     # Add all to session and commit
     try:

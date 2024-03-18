@@ -82,31 +82,7 @@ class UserSession(Base):
 
 
 # The following classes are for the user's health and fitness data
-
-# Workout class
-class Workout(Base):
-    __tablename__ = 'workouts'
-    id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey('users.id'),
-                     nullable=False)
-    date = Column(Date, nullable=False)
-    # Assuming a max length for the workout type
-    type = Column(String(255), nullable=False)
-    # Ensure duration is non-negative
-    duration = Column(Float, CheckConstraint('duration>=0'), nullable=False)
-    # Max length for the intensity description
-    intensity = Column(String(255), nullable=False)
-    # Ensure non-negative calories burned
-    calories_burned = Column(Float, CheckConstraint('calories_burned>=0'),
-                             nullable=False)
-    user = relationship("User", back_populates="workouts")
-
-    # indexing user_id and date for faster queries
-    # indexing by user_id first since it is more selective and commonly used
-    __table_args__ = (
-        Index('idx_user_id_date', 'user_id', 'date'),
-    )
-
+# They are related to the User class through foreign keys
 
 # FoodItem class
 class FoodItem(Base):
@@ -181,7 +157,7 @@ class Meal(Base):
     # indexing user_id and date for faster queries
     # indexing by user_id first since it is more selective and commonly used
     __table_args__ = (
-        Index('idx_user_id_date', 'user_id', 'date'),
+        Index('idx_user_id_date_m', 'user_id', 'date'),
     )
 
 
@@ -214,7 +190,7 @@ class WaterIntake(Base):
     # indexing user_id and date for faster queries
     # indexing by user_id first since it is more selective and commonly used
     __table_args__ = (
-        Index('idx_user_id_date', 'user_id', 'date'),
+        Index('idx_user_id_date_wi', 'user_id', 'date'),
     )
 
 
@@ -232,7 +208,7 @@ class NutritionLog(Base):
     # indexing user_id and date for faster queries
     # indexing by user_id first since it is more selective and commonly used
     __table_args__ = (
-        Index('idx_user_id_date', 'user_id', 'date'),
+        Index('idx_user_id_date_nl', 'user_id', 'date'),
     )
 
 
@@ -251,6 +227,31 @@ class Medication(Base):
 
     __table_args__ = (
         Index('idx_meds_user_start_end', 'user_id', 'start_date', 'end_date'),
+    )
+
+
+# Workout class
+class Workout(Base):
+    __tablename__ = 'workouts'
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey('users.id'),
+                     nullable=False)
+    date = Column(Date, nullable=False)
+    # Assuming a max length for the workout type
+    type = Column(String(255), nullable=False)
+    # Ensure duration is non-negative
+    duration = Column(Float, CheckConstraint('duration>=0'), nullable=False)
+    # Max length for the intensity description
+    intensity = Column(String(255), nullable=False)
+    # Ensure non-negative calories burned
+    calories_burned = Column(Float, CheckConstraint('calories_burned>=0'),
+                             nullable=False)
+    user = relationship("User", back_populates="workouts")
+
+    # indexing user_id and date for faster queries
+    # indexing by user_id first since it is more selective and commonly used
+    __table_args__ = (
+        Index('idx_user_id_date_wo', 'user_id', 'date'),
     )
 
 
@@ -302,7 +303,7 @@ class SleepLog(Base):
     # indexing user_id and date for faster queries
     # indexing by user_id first since it is more selective and commonly used
     __table_args__ = (
-        Index('idx_user_id_date', 'user_id', 'date'),
+        Index('idx_user_id_date_sl', 'user_id', 'date'),
     )
 
 
@@ -337,7 +338,7 @@ class HealthMetric(Base):
     # indexing by user_id first since it is more selective and commonly used
     # date and time are commonly used for filtering but date is more important
     __table_args__ = (
-        Index('idx_user_id_date_time', 'user_id', 'date', 'time'),
+        Index('idx_user_id_date_time_hm', 'user_id', 'date', 'time'),
     )
 
 
@@ -379,7 +380,7 @@ class BodyComposition(Base):
     # indexing user_id and date for faster queries
     # indexing by user_id first since it is more selective and commonly used
     __table_args__ = (
-        Index('idx_user_id_date', 'user_id', 'date'),
+        Index('idx_user_id_date_bc', 'user_id', 'date'),
     )
 
 
