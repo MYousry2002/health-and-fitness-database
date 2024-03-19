@@ -226,8 +226,44 @@ def track_goal_progress(user_id):
         return f"You have achieved {progress_percentage:.2f}% of your {goal.goal_type.value.lower()} goal."
     else:
         return "No active goals found."
-    
 
+
+# Scenario 13: Calculate the BMI for a user
+def calculate_user_bmi(user_id):
+    user_height = session.query(User.height).filter(User.id == user_id).scalar()
+    latest_weight = session.query(BodyComposition.weight).filter(
+        BodyComposition.user_id == user_id
+    ).order_by(BodyComposition.date.desc()).first()
+
+    if user_height is None or latest_weight is None:
+        return "Insufficient data to calculate BMI."
+
+    # Convert height from cm to meters and square it
+    height_in_meters = user_height / 100
+    height_squared = height_in_meters ** 2
+
+    # Calculate BMI
+    bmi = latest_weight[0] / height_squared
+    return f"The calculated BMI for user {user_id} is {bmi:.2f}."
+
+# Scenario 14: Summarize the most frequent workout types and their total duration
+def summarize_frequent_workouts(user_id, start_date, end_date):
+    workouts_summary = session.query(
+        Workout.type,
+        func.count(Workout.id).label("sessions"),
+        func.sum(Workout.duration).label("total_duration")
+    ).filter(
+        Workout.user_id == user_id,
+        Workout.date.between(start_date, end_date)
+    ).group_by(Workout.type
+    ).order_by(func.count(Workout.id).desc()
+    ).all()
+
+    return [{
+        "workout_type": workout.type,
+        "sessions": workout.sessions,
+        "total_duration": workout.total_duration
+    } for workout in workouts_summary]
 
 
 # Usage example
@@ -256,3 +292,7 @@ if __name__ == "__main__":
     print(dietary_diversity_tips(17))
     # Scenario 12
     print(track_goal_progress(42))
+    # Scenario 13
+    print(calculate_user_bmi(23))
+    # Scenario 14
+    print(summarize_frequent_workouts(23, '2023-04-01', '2024-01-31'))
