@@ -218,7 +218,7 @@ Data insertion is handled transactionally to maintain consistency and integrity,
 ## Installation and Excution
 1. Clone the repository
 ```bash
-git clone https://github.com/MYousry2002/health-database.git
+git clone https://github.com/MYousry2002/health-and-fitness-database
 ```
 2. Create virtual environment and install dependencies
 ```bash
