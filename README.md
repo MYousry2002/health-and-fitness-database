@@ -64,17 +64,17 @@ The Health and Fitness Tracking App is designed to offer users a comprehensive p
 ##### `food_items` Table
 - **Columns**: `id`, `name`, `calories`, `proteins`, `carbs`, `fats`, `fiber`
 - **Purpose**: To store detailed nutritional information for each food item, including macronutrients and fiber content.
-- **Design Justification**: Central to the nutrition tracking feature, this table allows for accurate calorie and nutrient intake calculation. It serves as a foundation for meal planning, dietary analysis, and nutritional recommendations. Having this table separate from the meals table helps avoid redunduncies in the data as we can have one food item in many meals.
+- **Design Justification**: Central to the nutrition tracking feature, this table allows for accurate calorie and nutrient intake calculation. It serves as a foundation for meal planning, dietary analysis, and nutritional recommendations. Having this table separate from the meals table helps avoid redundancies in the data as we can have one food item in many meals.
 
 ##### `vitamin` Table
 - **Columns**: `id`, `name`
 - **Purpose**: To catalog various vitamins present in food items.
-- **Design Justification**: By isolating vitamins into a separate table, we can have multiple vitamins associated with a food item while keeping the food item table simple and without redunduncies. It acts as a master list of vitamins.
+- **Design Justification**: By isolating vitamins into a separate table, we can have multiple vitamins associated with a food item while keeping the food item table simple and without redundancies. It acts as a master list of vitamins.
 
 ##### `mineral` Table
 - **Columns**: `id`, `name`
 - **Purpose**: Similar to the `vitamin` table, it catalogs minerals.
-- **Design Justification**: This separation facilitates having multiple minerals associated with a food item while keeping the food item table simple and without redunduncies. It acts as a master list of minerals.
+- **Design Justification**: This separation facilitates having multiple minerals associated with a food item while keeping the food item table simple and without redundancies. It acts as a master list of minerals.
 
 ##### `food_item_vitamins` Table
 - **Columns**: `id`, `food_item_id` (FK), `vitamin_id` (FK), `amount`
@@ -144,7 +144,7 @@ The Health and Fitness Tracking App is designed to offer users a comprehensive p
 - **Design Justification**: Enumerations for goal types and statuses ensure data consistency and enable tailored progress tracking. It is linked to users through a foriegn key.
 
 
-## Best Practices Adherance
+## Best Practices Adherence
 ### Constraints
 
 The Health and Fitness Tracking App database extensively utilizes constraints to ensure data integrity and validity across the schema. Notable examples include `CheckConstraint`s for ensuring that numeric data (like age, calories, heart rate) falls within realistic and meaningful ranges, and unique constraints on `username` and `email` in the `users` table to prevent duplicate records. These constraints are critical for maintaining a high quality of data, preventing erroneous entries, and facilitating accurate data analysis and personalized recommendations.
