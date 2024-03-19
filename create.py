@@ -393,13 +393,19 @@ class GoalStatusEnum(enum.Enum):
     ACHIEVED = "Achieved"
     FAILED = "Failed"
 
+# Define an enumeration for goal types
+class GoalTypesEnum(enum.Enum):
+    WEIGHT_LOSS = "Weight Loss"
+    MUSCLE_GAIN = "Muscle Gain"
+    STAMINA_BUILDING = "Stamina Building"
 
 class Goal(Base):
     __tablename__ = 'goals'
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey('users.id'), index=True,
                      nullable=False)
-    goal_type = Column(String(255), nullable=False)
+    # Use Enum for predefined goal types 
+    goal_type = Column(Enum(GoalTypesEnum), nullable=False)
     target_value = Column(Float, CheckConstraint('target_value>=0'),
                           nullable=False)  # Targets should be non-negative
     current_value = Column(Float, CheckConstraint('current_value>=0'),

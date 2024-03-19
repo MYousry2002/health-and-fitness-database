@@ -3,7 +3,7 @@ from create import (
     User, Workout, FoodItem, Vitamin, Mineral,
     FoodItemVitamin, FoodItemMineral, Meal, MealFoodItem,
     WaterIntake, NutritionLog, Medication, SleepLog,
-    HealthMetric, BodyComposition, Goal, GoalStatusEnum
+    HealthMetric, BodyComposition, Goal, GoalStatusEnum, GoalTypesEnum
 )
 from contextlib import contextmanager
 from faker import Faker
@@ -281,8 +281,7 @@ def create_goals(users, num_goals=100):
         user = random.choice(users)
         goal = Goal(
             user_id=user.id,
-            goal_type=random.choice(['Weight Loss', 'Muscle Gain',
-                                     'Stamina Building']),
+            goal_type=random.choice(list(GoalTypesEnum)),
             target_value=random.uniform(5, 20),
             current_value=random.uniform(0, 5),
             deadline=fake.date_between(start_date='today', end_date='+1y'),

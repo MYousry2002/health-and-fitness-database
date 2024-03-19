@@ -4,7 +4,7 @@ from create import (
     User, Workout, FoodItem, Vitamin, Mineral,
     FoodItemVitamin, FoodItemMineral, Meal, MealFoodItem,
     WaterIntake, NutritionLog, Medication, SleepLog,
-    HealthMetric, BodyComposition, Goal, GoalStatusEnum
+    HealthMetric, BodyComposition, Goal, GoalStatusEnum, GoalTypesEnum
 )
 from sqlalchemy import func, distinct
 from datetime import datetime, timedelta
@@ -75,8 +75,8 @@ def recommend_water_intake(user_id):
     return avg_water_intake, recommended_intake
 
 
-# Scenario 7: Suggest nutritional improvements based on user's goals and recent calorie intake
-def suggest_nutritional_improvements(user_id, custom_goal_calories=None):
+# Scenario 7: Suggest calories intake based on user's goals and recent calorie intake
+def suggest_calories_intake(user_id, custom_goal_calories=None):
     # Use the most recent BMR as the default goal unless a custom goal is provided
     if custom_goal_calories is None:
         latest_bmr = session.query(BodyComposition.basal_metabolic_rate).filter(
@@ -196,19 +196,19 @@ def track_goal_progress(user_id):
     progress = None
 
     if goal:
-        if goal.goal_type == 'Weight Loss':
+        if goal.goal_type == GoalTypesEnum.WEIGHT_LOSS:
             latest_weight = session.query(BodyComposition).filter(
                 BodyComposition.user_id == user_id
             ).order_by(BodyComposition.date.desc()).first().weight
             progress = (goal.current_value - latest_weight) / (goal.current_value - goal.target_value)
             
-        elif goal.goal_type == 'Muscle Gain':
+        elif goal.goal_type == GoalTypesEnum.MUSCLE_GAIN:
             latest_muscle_mass = session.query(BodyComposition).filter(
                 BodyComposition.user_id == user_id
             ).order_by(BodyComposition.date.desc()).first().skeletal_muscle_mass
             progress = (latest_muscle_mass - goal.current_value) / (goal.target_value - goal.current_value)
         
-        elif goal.goal_type == 'Stamina Building':
+        elif goal.goal_type == GoalTypesEnum.STAMINA_BUILDING:
             recent_workouts = session.query(Workout).filter(
                 Workout.user_id == user_id,
                 Workout.date >= current_date - timedelta(days=30)
@@ -219,9 +219,11 @@ def track_goal_progress(user_id):
                 progress = total_difficulty / max_possible_score
             else:
                 return "No recent workouts to assess stamina building."
+        
+        # elif.... add more goal types as needed
 
         progress_percentage = progress * 100
-        return f"You have achieved {progress_percentage:.2f}% of your {goal.goal_type.lower()} goal."
+        return f"You have achieved {progress_percentage:.2f}% of your {goal.goal_type.value.lower()} goal."
     else:
         return "No active goals found."
 
@@ -230,28 +232,27 @@ def track_goal_progress(user_id):
 
 # Usage example
 if __name__ == "__main__":
-    # user_id_example = 1  # Example user ID
     # Scenario 1
     print(get_workouts_by_user_and_date(17, '2023-04-01', '2024-01-31'))
     # Scenario 2
     print(average_daily_calories(36, '2023-04-01', '2024-01-31'))
     # Scenario 3
-    print(average_sleep_duration_last_month(1))
+    print(average_sleep_duration_last_month(34))
     # Scenario 4
     print(weight_change_past_year(48))
     # Scenario 5
     print(last_recorded_health_metrics(27))
     # Scenario 6
-    print(recommend_water_intake(43))
+    print(recommend_water_intake(29))
     # Scenario 7
-    print(suggest_nutritional_improvements(45))
+    print(suggest_calories_intake(45))
     # Scenario 8
     print(assess_fitness_level(12))
     # Scenario 9
-    print(sleep_duration_tips(1))
+    print(sleep_duration_tips(34))
     # Scenario 10
-    print(sleep_consistency_tips(1))
+    print(sleep_consistency_tips(34))
     # Scenario 11
     print(dietary_diversity_tips(17))
     # Scenario 12
-    print(track_goal_progress(11))
+    print(track_goal_progress(42))
