@@ -1,4 +1,4 @@
-# Health and Fiteness Tracking App Database and Queries
+# Health and Fitness Tracking App Database and Queries
 
 ## Overview
 
