@@ -6,7 +6,7 @@ from create import (
     WaterIntake, NutritionLog, Medication, SleepLog,
     HealthMetric, BodyComposition, Goal, GoalStatusEnum
 )
-from sqlalchemy import func, and_
+from sqlalchemy import func, distinct
 from datetime import datetime, timedelta
 
 # Create a new session
@@ -166,6 +166,66 @@ def sleep_consistency_tips(user_id):
         return " ".join(tips)
     else:
         return "Not enough data to assess your sleep routine."
+    
+
+# Scenario 11: Provide tips to improve dietary diversity based on the number of unique food items consumed
+def dietary_diversity_tips(user_id):
+    recent_food_items_count = session.query(
+        func.count(distinct(MealFoodItem.food_item_id))
+    ).join(Meal).filter(
+        Meal.user_id == user_id,
+        Meal.date >= datetime.now() - timedelta(days=30)
+    ).scalar()
+
+    # Thresholds and scoring can be adjusted based on nutritional guidelines
+    if recent_food_items_count < 20:
+        return "Your diet lacks diversity, which might miss out on essential nutrients. Try incorporating a variety of fruits, vegetables, and proteins."
+    else:
+        return "You have a good variety in your diet. Keep exploring different food items to ensure a balanced intake of nutrients."
+
+
+# Scenario 12: Track goal progress based on the latest health metrics and workout data
+def track_goal_progress(user_id):
+    current_date = datetime.now()
+    goal = session.query(Goal).filter(
+        Goal.user_id == user_id,
+        Goal.deadline >= current_date
+    ).order_by(Goal.deadline.desc()).first()
+
+    # Initialize progress to None
+    progress = None
+
+    if goal:
+        if goal.goal_type == 'Weight Loss':
+            latest_weight = session.query(BodyComposition).filter(
+                BodyComposition.user_id == user_id
+            ).order_by(BodyComposition.date.desc()).first().weight
+            progress = (goal.current_value - latest_weight) / (goal.current_value - goal.target_value)
+            
+        elif goal.goal_type == 'Muscle Gain':
+            latest_muscle_mass = session.query(BodyComposition).filter(
+                BodyComposition.user_id == user_id
+            ).order_by(BodyComposition.date.desc()).first().skeletal_muscle_mass
+            progress = (latest_muscle_mass - goal.current_value) / (goal.target_value - goal.current_value)
+        
+        elif goal.goal_type == 'Stamina Building':
+            recent_workouts = session.query(Workout).filter(
+                Workout.user_id == user_id,
+                Workout.date >= current_date - timedelta(days=30)
+            ).all()
+            if recent_workouts:
+                total_difficulty = sum([{"Low": 1, "Medium": 2, "High": 3}[workout.intensity] for workout in recent_workouts])
+                max_possible_score = len(recent_workouts) * 3
+                progress = total_difficulty / max_possible_score
+            else:
+                return "No recent workouts to assess stamina building."
+
+        progress_percentage = progress * 100
+        return f"You have achieved {progress_percentage:.2f}% of your {goal.goal_type.lower()} goal."
+    else:
+        return "No active goals found."
+
+
 
 
 # Usage example
@@ -191,3 +251,7 @@ if __name__ == "__main__":
     print(sleep_duration_tips(1))
     # Scenario 10
     print(sleep_consistency_tips(1))
+    # Scenario 11
+    print(dietary_diversity_tips(17))
+    # Scenario 12
+    print(track_goal_progress(11))
