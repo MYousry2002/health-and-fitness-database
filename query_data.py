@@ -1,5 +1,11 @@
 # import necessary modules from create.py
-from create import Session, User, Workout, FoodItem, Meal, SleepLog, BodyComposition, HealthMetric, MealFoodItem
+from create import (
+    Session,
+    User, Workout, FoodItem, Vitamin, Mineral,
+    FoodItemVitamin, FoodItemMineral, Meal, MealFoodItem,
+    WaterIntake, NutritionLog, Medication, SleepLog,
+    HealthMetric, BodyComposition, Goal, GoalStatusEnum
+)
 from sqlalchemy import func, and_
 from datetime import datetime, timedelta
 
@@ -54,11 +60,134 @@ def last_recorded_health_metrics(user_id):
     ).order_by(HealthMetric.date.desc(), HealthMetric.time.desc()).first()
     return last_metrics
 
+# Scenario 6: Recommend water intake based on recent water intake data
+def recommend_water_intake(user_id):
+    recent_date = datetime.now() - timedelta(days=7)
+    avg_water_intake = session.query(
+        func.avg(WaterIntake.amount)
+    ).filter(
+        WaterIntake.user_id == user_id,
+        WaterIntake.date >= recent_date
+    ).scalar()
+    # Fetch the gender from the User table
+    user_gender = session.query(User.gender).filter(User.id == user_id).scalar()
+    recommended_intake = 3.7 if user_gender == 'Male' else 2.7  # Liters per day, roughly
+    return avg_water_intake, recommended_intake
+
+
+# Scenario 7: Suggest nutritional improvements based on user's goals and recent calorie intake
+def suggest_nutritional_improvements(user_id, custom_goal_calories=None):
+    # Use the most recent BMR as the default goal unless a custom goal is provided
+    if custom_goal_calories is None:
+        latest_bmr = session.query(BodyComposition.basal_metabolic_rate).filter(
+            BodyComposition.user_id == user_id
+        ).order_by(BodyComposition.date.desc()).first()
+        
+        if latest_bmr is None:
+            return "No body composition data available to suggest nutritional improvements."
+        
+        goal_calories = latest_bmr[0]
+    else:
+        goal_calories = custom_goal_calories
+
+    avg_calories = average_daily_calories(user_id, datetime.now() - timedelta(days=30), datetime.now())
+    if avg_calories is None:
+        return "No dietary data available to suggest nutritional improvements."
+
+    if avg_calories > goal_calories:
+        return "Consider reducing calorie intake to meet your goals."
+    elif avg_calories < goal_calories:
+        return "You may need to increase your calorie intake to meet your goals."
+    else:
+        return "Your current calorie intake aligns with your goals."
+
+
+# Scenario 8: Using the intensity and frequency of workouts to provide feedback on 
+# the user's current fitness level and suggest changes if necessary.
+def assess_fitness_level(user_id):
+    recent_workouts = get_workouts_by_user_and_date(user_id, datetime.now() - timedelta(days=30), datetime.now())
+    if not recent_workouts:
+        return "No recent workouts found. Staying active is key to a healthy lifestyle."
+    average_intensity = sum([{"Low": 1, "Medium": 2, "High": 3}[workout.intensity] for workout in recent_workouts]) / len(recent_workouts)
+    if average_intensity < 2:
+        return "Consider increasing the intensity of your workouts to improve your fitness level."
+    else:
+        return "Great job! Your workout intensity is on point."
+
+
+# Scenario 9: Provide tips to improve sleep quality based on recent average sleep duration
+def sleep_duration_tips(user_id):
+    avg_sleep_duration = average_sleep_duration_last_month(user_id)
+    if avg_sleep_duration is None:
+        return "No sleep data available to suggest improvements."
+    
+    if avg_sleep_duration < 7:
+        return "You might not be getting enough rest. Consider setting a regular bedtime and avoiding screens before sleep to improve sleep quality."
+    elif avg_sleep_duration > 9:
+        return "Too much sleep can also affect your health negatively. Try to wake up at a consistent time and avoid long daytime naps."
+    else:
+        return "Your sleep routine looks good. Maintain a consistent sleep schedule to keep up the good work!"
+
+
+# Scenario 10: Provide tips to improve sleep consistency based on recent bedtime and wake-up time
+def sleep_consistency_tips(user_id):
+    # Calculate the average bedtime and wake-up time over the last month
+    recent_date = datetime.now() - timedelta(days=30)
+    avg_bedtime_hour = session.query(
+        func.avg(func.strftime('%H', SleepLog.time_fell_asleep))
+    ).filter(
+        SleepLog.user_id == user_id,
+        SleepLog.date >= recent_date
+    ).scalar()
+
+    avg_wakeup_hour = session.query(
+        func.avg(func.strftime('%H', SleepLog.time_woke_up))
+    ).filter(
+        SleepLog.user_id == user_id,
+        SleepLog.date >= recent_date
+    ).scalar()
+
+    # Provide recommendations based on the consistency of bedtime and wake-up time
+    tips = []
+    if avg_bedtime_hour is not None and avg_wakeup_hour is not None:
+        avg_bedtime_hour = float(avg_bedtime_hour)
+        avg_wakeup_hour = float(avg_wakeup_hour)
+        
+        # Assuming "inconsistent" means varying more than 1 hour on average
+        if not (22 <= avg_bedtime_hour <= 24 or 0 <= avg_bedtime_hour <= 1):  # Not within 10 PM to 1 AM range
+            tips.append("Try to go to bed between 10 PM and 1 AM for better sleep quality.")
+
+        if not (5 <= avg_wakeup_hour <= 8):  # Not within 5 AM to 8 AM range
+            tips.append("Aiming to wake up between 5 AM and 8 AM can help improve your daily rhythm.")
+
+        if not tips:  # If no specific tips were added
+            return "Your sleep routine looks good. Keep it up!"
+        
+        return " ".join(tips)
+    else:
+        return "Not enough data to assess your sleep routine."
+
+
 # Usage example
 if __name__ == "__main__":
     # user_id_example = 1  # Example user ID
+    # Scenario 1
     print(get_workouts_by_user_and_date(17, '2023-04-01', '2024-01-31'))
+    # Scenario 2
     print(average_daily_calories(36, '2023-04-01', '2024-01-31'))
+    # Scenario 3
     print(average_sleep_duration_last_month(1))
+    # Scenario 4
     print(weight_change_past_year(48))
+    # Scenario 5
     print(last_recorded_health_metrics(27))
+    # Scenario 6
+    print(recommend_water_intake(43))
+    # Scenario 7
+    print(suggest_nutritional_improvements(45))
+    # Scenario 8
+    print(assess_fitness_level(12))
+    # Scenario 9
+    print(sleep_duration_tips(1))
+    # Scenario 10
+    print(sleep_consistency_tips(1))
