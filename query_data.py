@@ -226,7 +226,7 @@ def track_goal_progress(user_id):
         return f"You have achieved {progress_percentage:.2f}% of your {goal.goal_type.value.lower()} goal."
     else:
         return "No active goals found."
-
+    
 
 
 
